@@ -5,9 +5,9 @@
  ***********************/
 #include <iostream>
 
-#include "p0_starter.hpp"
+#include "p0_starter.h"
 
-template <class T>
+template<class T>
 std::ostream& operator<<(std::ostream& o, const scudb::Matrix<T>& m) {
   auto r = m.GetRowCount();
   auto c = m.GetColumnCount();

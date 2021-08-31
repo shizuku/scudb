@@ -14,7 +14,6 @@
 
 #include <memory>
 #include <stdexcept>
-#include <utility>
 #include <vector>
 
 namespace scudb {
@@ -23,12 +22,12 @@ namespace scudb {
  * The Matrix type defines a common
  * interface for matrix operations.
  */
-template <typename T>
+template<typename T>
 class Matrix {
 protected:
   /**
    * TODO(P0): Add implementation
-   *
+   * 
    * Construct a new Matrix instance.
    * @param rows The number of rows
    * @param cols The number of columns
@@ -37,6 +36,7 @@ protected:
   Matrix(int rows, int cols) : rows_{rows}, cols_{cols} {
     linear_ = new T[rows_ * cols_]{};
   }
+
   /**
    * Destroy a matrix instance.
    * TODO(P0): Add implementation
@@ -44,6 +44,7 @@ protected:
   virtual ~Matrix() {
     delete[] linear_;
   }
+
   /** The number of rows in the matrix */
   int rows_;
   /** The number of columns in the matrix */
@@ -103,7 +104,7 @@ public:
  * The RowMatrix type is a concrete matrix implementation.
  * It implements the interface defined by the Matrix type.
  */
-template <typename T>
+template<typename T>
 class RowMatrix : public Matrix<T> {
 public:
   /**
@@ -222,7 +223,7 @@ private:
  * The RowMatrixOperations class defines operations
  * that may be performed on instances of `RowMatrix`.
  */
-template <typename T>
+template<typename T>
 class RowMatrixOperations {
 public:
   /**
@@ -260,7 +261,6 @@ public:
     }
     auto ra = matrixA->GetRowCount();
     auto ca = matrixA->GetColumnCount();
-    auto rb = matrixB->GetRowCount();
     auto cb = matrixB->GetColumnCount();
     auto res = std::make_unique<RowMatrix<T>>(ra, cb);
     for (int i = 0; i < ra; i++) {
@@ -316,4 +316,4 @@ public:
   }
 };
 
-} // namespace scudb
+}// namespace scudb
