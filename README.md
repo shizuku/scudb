@@ -1,3 +1,3 @@
 # scudb
 
-Homework of Database of SCU.
+2019141460310 杨旭建
