@@ -97,6 +97,7 @@ bool ExtendibleHash<K, V>::Remove(const K &key) {
   if (p == buckets[global_key]->data.end()) {
     return false;
   } else {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
     buckets[global_key]->data.erase(p);
     return true;
   }
@@ -109,28 +110,6 @@ bool ExtendibleHash<K, V>::Remove(const K &key) {
  */
 template <typename K, typename V>
 void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
-  auto refactor = [&](size_t bucket_id) {
-    std::map<K, V> tmp{};
-    tmp.swap(buckets[bucket_id]->data);
-    buckets[bucket_id]->local_depth++;
-    buckets[bucket_id] = std::make_shared<Bucket>(bucket_size, global_depth);
-    for (auto i = tmp.begin(); i != tmp.end(); ++i) {
-      Insert(i->first, i->second);
-    }
-  };
-  auto expand = [&](size_t bucket_id) {
-    global_depth++;
-    // add new buckets:
-    size_t cur_bu_sz = buckets.size();
-    for (size_t i = 0; i < cur_bu_sz; i++) {
-      if (i != bucket_id) {
-        buckets.push_back(buckets[i]);
-      } else {
-        buckets.push_back(std::make_shared<Bucket>(bucket_size, global_depth));
-      }
-    }
-    refactor(bucket_id);
-  };
   auto hk = HashKey(key);
   size_t bucket_id = hk & (((size_t)1 << global_depth) - 1);
   if (buckets[bucket_id]->data.size() >= bucket_size) {
@@ -139,8 +118,39 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
     } else {
       refactor(bucket_id);
     }
+    Insert(key, value);
+  } else {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    buckets[bucket_id]->data.insert({key, value});
   }
-  buckets[bucket_id]->data.insert({key, value});
+}
+
+template <typename K, typename V>
+void ExtendibleHash<K, V>::refactor(size_t bucket_id) {
+  std::lock_guard<std::recursive_mutex> lock(mutex);
+  std::map<K, V> tmp{};
+  tmp.swap(buckets[bucket_id]->data);
+  buckets[bucket_id]->local_depth++;
+  buckets[bucket_id] = std::make_shared<Bucket>(bucket_size, global_depth);
+  for (auto i = tmp.begin(); i != tmp.end(); ++i) {
+    Insert(i->first, i->second);
+  }
+}
+
+template <typename K, typename V>
+void ExtendibleHash<K, V>::expand(size_t bucket_id) {
+  std::lock_guard<std::recursive_mutex> lock(mutex);
+  global_depth++;
+  // add new buckets:
+  size_t cur_bu_sz = buckets.size();
+  for (size_t i = 0; i < cur_bu_sz; i++) {
+    if (i != bucket_id) {
+      buckets.push_back(buckets[i]);
+    } else {
+      buckets.push_back(std::make_shared<Bucket>(bucket_size, global_depth));
+    }
+  }
+  refactor(bucket_id);
 }
 
 template class ExtendibleHash<page_id_t, Page *>;

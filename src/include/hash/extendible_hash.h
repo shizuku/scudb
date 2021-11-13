@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -25,7 +26,7 @@ public:
   // constructor
   explicit ExtendibleHash(size_t bucket_size);
   // helper function to generate hash addressing
-  size_t HashKey(const K &key);
+  static size_t HashKey(const K &key);
   // helper function to get global & local depth
   int GetGlobalDepth() const;
   int GetLocalDepth(int bucket_id) const;
@@ -36,6 +37,9 @@ public:
   void Insert(const K &bucket_id, const V &value) override;
 
 private:
+  void refactor(size_t bucket_id);
+  void expand(size_t bucket_id);
+
   struct Bucket {
     explicit Bucket(size_t size);
     Bucket(size_t size, int local_depth);
@@ -48,6 +52,7 @@ private:
   int global_depth;
   size_t bucket_size;
   std::vector<std::shared_ptr<Bucket>> buckets;
+  std::recursive_mutex mutex;
 };
 
 } // namespace scudb
