@@ -77,7 +77,12 @@ template <typename K, typename V>
 bool ExtendibleHash<K, V>::Find(const K &key, V &value) {
   auto hk = HashKey(key);
   size_t global_key = hk & (((size_t)1 << global_depth) - 1);
-  return buckets[global_key]->data.find(key) != buckets[global_key]->data.end();
+  auto p = buckets[global_key]->data.find(key);
+  if (p != buckets[global_key]->data.end()) {
+    value = p->second;
+    return true;
+  }
+  return false;
 }
 
 /*
@@ -107,6 +112,7 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
   auto refactor = [&](size_t bucket_id) {
     std::map<K, V> tmp{};
     tmp.swap(buckets[bucket_id]->data);
+    buckets[bucket_id]->local_depth++;
     buckets[bucket_id] = std::make_shared<Bucket>(bucket_size, global_depth);
     for (auto i = tmp.begin(); i != tmp.end(); ++i) {
       Insert(i->first, i->second);
@@ -131,7 +137,7 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
     if (buckets[bucket_id]->local_depth == global_depth) {
       expand(bucket_id);
     } else {
-
+      refactor(bucket_id);
     }
   }
   buckets[bucket_id]->data.insert({key, value});
