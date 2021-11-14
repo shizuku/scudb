@@ -75,6 +75,7 @@ int ExtendibleHash<K, V>::GetNumBuckets() const {
  */
 template <typename K, typename V>
 bool ExtendibleHash<K, V>::Find(const K &key, V &value) {
+  std::lock_guard<std::recursive_mutex> lock(w_mutex);
   auto hk = HashKey(key);
   size_t global_key = hk & (((size_t)1 << global_depth) - 1);
   auto p = buckets[global_key]->data.find(key);
@@ -91,13 +92,13 @@ bool ExtendibleHash<K, V>::Find(const K &key, V &value) {
  */
 template <typename K, typename V>
 bool ExtendibleHash<K, V>::Remove(const K &key) {
+  std::lock_guard<std::recursive_mutex> lock(w_mutex);
   auto hk = HashKey(key);
   size_t global_key = hk & (((size_t)1 << global_depth) - 1);
   auto p = buckets[global_key]->data.find(key);
   if (p == buckets[global_key]->data.end()) {
     return false;
   } else {
-    std::lock_guard<std::recursive_mutex> lock(mutex);
     buckets[global_key]->data.erase(p);
     return true;
   }
@@ -110,6 +111,7 @@ bool ExtendibleHash<K, V>::Remove(const K &key) {
  */
 template <typename K, typename V>
 void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
+  std::lock_guard<std::recursive_mutex> lock(w_mutex);
   auto hk = HashKey(key);
   size_t bucket_id = hk & (((size_t)1 << global_depth) - 1);
   if (buckets[bucket_id]->data.size() >= bucket_size) {
@@ -120,14 +122,13 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
     }
     Insert(key, value);
   } else {
-    std::lock_guard<std::recursive_mutex> lock(mutex);
     buckets[bucket_id]->data.insert({key, value});
   }
 }
 
 template <typename K, typename V>
 void ExtendibleHash<K, V>::refactor(size_t bucket_id) {
-  std::lock_guard<std::recursive_mutex> lock(mutex);
+  std::lock_guard<std::recursive_mutex> lock(w_mutex);
   std::map<K, V> tmp{};
   tmp.swap(buckets[bucket_id]->data);
   buckets[bucket_id]->local_depth++;
@@ -139,7 +140,7 @@ void ExtendibleHash<K, V>::refactor(size_t bucket_id) {
 
 template <typename K, typename V>
 void ExtendibleHash<K, V>::expand(size_t bucket_id) {
-  std::lock_guard<std::recursive_mutex> lock(mutex);
+  std::lock_guard<std::recursive_mutex> lock(w_mutex);
   global_depth++;
   // add new buckets:
   size_t cur_bu_sz = buckets.size();

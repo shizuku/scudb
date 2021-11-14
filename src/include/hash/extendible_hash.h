@@ -52,7 +52,8 @@ private:
   int global_depth;
   size_t bucket_size;
   std::vector<std::shared_ptr<Bucket>> buckets;
-  std::recursive_mutex mutex;
+  std::recursive_mutex w_mutex;
+  std::recursive_mutex r_mutex;
 };
 
 } // namespace scudb
