@@ -9,12 +9,16 @@
 
 #pragma once
 
+#include <algorithm>
+#include <chrono>
+
 #include "buffer/replacer.h"
 #include "hash/extendible_hash.h"
 
 namespace scudb {
 
-template <typename T> class LRUReplacer : public Replacer<T> {
+template <typename T>
+class LRUReplacer : public Replacer<T> {
 public:
   // do not change public interface
   LRUReplacer();
@@ -31,6 +35,11 @@ public:
 
 private:
   // add your member variables here
+  using Item = std::tuple<T, std::chrono::system_clock::time_point>;
+  std::vector<Item> data;
+  std::recursive_mutex mutex;
+
+  void sort();
 };
 
 } // namespace scudb
