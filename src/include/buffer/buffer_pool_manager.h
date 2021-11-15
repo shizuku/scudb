@@ -20,7 +20,7 @@ namespace scudb {
 class BufferPoolManager {
 public:
   BufferPoolManager(size_t pool_size, DiskManager *disk_manager,
-                          LogManager *log_manager = nullptr);
+                    LogManager *log_manager = nullptr);
 
   ~BufferPoolManager();
 
@@ -29,6 +29,8 @@ public:
   bool UnpinPage(page_id_t page_id, bool is_dirty);
 
   bool FlushPage(page_id_t page_id);
+
+  void FlushAllPages();
 
   Page *NewPage(page_id_t &page_id);
 
@@ -40,8 +42,8 @@ private:
   DiskManager *disk_manager_;
   LogManager *log_manager_;
   HashTable<page_id_t, Page *> *page_table_; // to keep track of pages
-  Replacer<Page *> *replacer_;   // to find an unpinned page for replacement
-  std::list<Page *> *free_list_; // to find a free page for replacement
-  std::mutex latch_;             // to protect shared data structure
+  Replacer<Page *> *replacer_;               // to find an unpinned page for replacement
+  std::list<Page *> *free_list_;             // to find a free page for replacement
+  std::recursive_mutex latch_;               // to protect shared data structure
 };
 } // namespace scudb
