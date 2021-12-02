@@ -36,6 +36,8 @@ public:
   bool Remove(const K &key) override;
   void Insert(const K &bucket_id, const V &value) override;
 
+  size_t Size() const override { return count; }
+
 private:
   void refactor(size_t bucket_id);
   void expand(size_t bucket_id);
@@ -51,6 +53,7 @@ private:
   // add your own member variables here
   int global_depth;
   size_t bucket_size;
+  size_t count;
   std::vector<std::shared_ptr<Bucket>> buckets;
   std::recursive_mutex w_mutex;
   std::recursive_mutex r_mutex;

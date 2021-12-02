@@ -24,26 +24,32 @@ public:
 
   ~BufferPoolManager();
 
+  BufferPoolManager(BufferPoolManager const &) = delete;
+  BufferPoolManager &operator=(BufferPoolManager const &) = delete;
+
   Page *FetchPage(page_id_t page_id);
 
   bool UnpinPage(page_id_t page_id, bool is_dirty);
 
   bool FlushPage(page_id_t page_id);
 
-  void FlushAllPages();
-
   Page *NewPage(page_id_t &page_id);
 
   bool DeletePage(page_id_t page_id);
+
+  bool Check() const {
+    return page_table_->Size() == (replacer_->Size() + 1);
+  }
 
 private:
   size_t pool_size_; // number of pages in buffer pool
   Page *pages_;      // array of pages
   DiskManager *disk_manager_;
   LogManager *log_manager_;
-  HashTable<page_id_t, Page *> *page_table_; // to keep track of pages
+  HashTable<page_id_t, Page *> *page_table_; // to keep track of pages that are currently in memory
   Replacer<Page *> *replacer_;               // to find an unpinned page for replacement
   std::list<Page *> *free_list_;             // to find a free page for replacement
-  std::recursive_mutex latch_;               // to protect shared data structure
+  std::mutex latch_;                         // to protect shared data structure
 };
+
 } // namespace scudb

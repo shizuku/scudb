@@ -11,7 +11,7 @@ namespace scudb {
  */
 template <typename K, typename V>
 ExtendibleHash<K, V>::ExtendibleHash(size_t bucket_size)
-    : global_depth{1}, bucket_size{bucket_size} {
+    : global_depth{1}, bucket_size{bucket_size}, count{0} {
   buckets.push_back(std::make_shared<Bucket>(bucket_size));
   buckets.push_back(std::make_shared<Bucket>(bucket_size));
 }
@@ -100,6 +100,7 @@ bool ExtendibleHash<K, V>::Remove(const K &key) {
     return false;
   } else {
     buckets[global_key]->data.erase(p);
+    count--;
     return true;
   }
 }
@@ -123,6 +124,7 @@ void ExtendibleHash<K, V>::Insert(const K &key, const V &value) {
     Insert(key, value);
   } else {
     buckets[bucket_id]->data.insert({key, value});
+    count++;
   }
 }
 
@@ -166,7 +168,6 @@ ExtendibleHash<K, V>::Bucket::Bucket(size_t size)
     : size{size}, local_depth{0} {
   while (size > 0) {
     size >>= 2;
-
     local_depth++;
   }
 }

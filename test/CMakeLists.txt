@@ -72,3 +72,4 @@ foreach(test_src ${test_srcs} )
 
 endforeach(test_src ${test_srcs})
 add_definitions("-Wno-error=deprecated-copy")
+add_definitions("-Wno-error=unused-variable")
